@@ -27,8 +27,7 @@ SECRET_KEY = 'django-insecure-yu)jpn%jxwzdbfvxj6v-r_!a8xa%p!cugh((i044asrgl$3q#d
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -42,10 +41,12 @@ INSTALLED_APPS = [
     'rest_framework',
     "rest_framework_simplejwt",
     'user_management',
-    'campus_management'
+    'content_management',
+    'corsheaders',  # Add this line
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Add this line
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -140,7 +141,11 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
 
-APPEND_SLASH = True
+APPEND_SLASH = False
 
 FIREBASE_APP = firebase_admin
 FIREBASE_BUCKET = bucket
+
+# CORS settings
+CORS_ALLOW_ALL_ORIGINS = True  # For development only
+CORS_ALLOW_CREDENTIALS = True

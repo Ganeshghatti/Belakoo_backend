@@ -48,7 +48,7 @@ class TokenObtainSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         email = attrs.get('email')
         password = attrs.get('password')
-
+        
         if email and password:
             user = User.objects.filter(email=email).first()
             if user and user.check_password(password):

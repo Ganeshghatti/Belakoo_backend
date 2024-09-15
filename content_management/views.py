@@ -5,8 +5,6 @@ from rest_framework import status
 from .models import Campus, Subject, Chapter, Level
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
-from .utils import upload_file_to_firebase
-from rest_framework.parsers import MultiPartParser, FormParser
 
 class CampusListView(APIView):
     permission_classes = [IsAuthenticated]
