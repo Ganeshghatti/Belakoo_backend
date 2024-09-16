@@ -27,8 +27,6 @@ class RegisterUser(APIView):
         except Exception as e:
             return Response({'msg': f'Error in creating user: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-
 class UserLogin(APIView):
     def post(self, request):
         email = request.data.get('email')
@@ -43,7 +41,7 @@ class UserLogin(APIView):
             return Response({'msg': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
 class TokenObtainSerializer(TokenObtainPairSerializer):
-    username_field = User.EMAIL_FIELD
+    username_field = User.USERNAME_FIELD
 
     def validate(self, attrs):
         email = attrs.get('email')
@@ -62,7 +60,6 @@ class TokenObtainSerializer(TokenObtainPairSerializer):
                 raise serializers.ValidationError('No active account found with the given credentials')
         else:
             raise serializers.ValidationError('Must include "email" and "password".')
-
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)

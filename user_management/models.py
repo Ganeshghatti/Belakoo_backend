@@ -1,53 +1,36 @@
-import django.utils.timezone
-from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
-from django.contrib.auth.models import PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
-from django.contrib.auth.hashers import make_password, check_password
+import uuid
 
-class UserManager(BaseUserManager):
-    def _create_user(self, email, password, **kwargs):
-        user = self.model(email=email, is_active=True, **kwargs)
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('The Email field must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
-        user.save(using=self.db)
+        user.save(using=self._db)
         return user
 
-    def create_user(self, email, password, **kwargs):
-        kwargs.setdefault('is_superuser', False)
-        return self._create_user(email, password, **kwargs)
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
 
-    def create_superuser(self, email, password, **kwargs):
-        kwargs.setdefault('is_superuser', True)
-        return self._create_user(email, password, **kwargs)
+        return self.create_user(email, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(max_length=255, unique=True, primary_key=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField(unique=True)
     name = models.CharField(max_length=255)
-    is_superuser = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
-    password = models.CharField(max_length=255)
-    created_date = models.DateTimeField(default=django.utils.timezone.now)  # Fix here
-    last_login = models.DateTimeField(null=True)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)  # Ensure the superuser flag exists
 
-    groups = models.ManyToManyField(
-        'auth.Group',
-        related_name='custom_user_set',  # Avoid conflict with default User model
-        blank=True,
-        help_text='The groups this user belongs to.'
-    )
-    user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        related_name='custom_user_permissions',  # Avoid conflict with default User model
-        blank=True,
-        help_text='Specific permissions for this user.'
-    )
-
-    objects = UserManager()
+    objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
-    EMAIL_FIELD = 'email'  # Add this line
+    REQUIRED_FIELDS = ['name']  # This can be optional, but retained for clarity
 
-    def set_password(self, raw_password):
-        self.password = make_password(raw_password)
-
-    def check_password(self, raw_password):
-        return check_password(raw_password, self.password)  # Add self.password here
+    def __str__(self):
+        return self.email

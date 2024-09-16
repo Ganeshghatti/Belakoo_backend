@@ -5,14 +5,16 @@ from rest_framework import status
 from .models import Campus, Subject, Chapter, Level
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 class CampusListView(APIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         campuses = Campus.objects.all()
         data = [{
-            'id': campus.id,
+            'id': str(campus.id),  # Convert UUID to string
             'name': campus.name,
             'icon': campus.icon,
             'description': campus.description,
@@ -26,12 +28,12 @@ class CampusDetailView(APIView):
         try:
             campus = Campus.objects.get(id=campus_id)
             data = {
-                'id': campus.id,
+                'id': str(campus.id),  # Convert UUID to string
                 'name': campus.name,
                 'icon': campus.icon,
                 'description': campus.description,
                 'subjects': [{
-                    'id': subject.id,
+                    'id': str(subject.id),  # Convert UUID to string
                     'name': subject.name,
                     'icon': subject.icon,
                 } for subject in campus.subjects.all()]
@@ -56,7 +58,7 @@ class SubjectDetailView(APIView):
                     'levels': [{
                         'id': level.id,
                         'name': level.name,
-                        'link': level.link,
+                        'pdflink': level.pdflink,
                         'is_done': level.is_done
                     } for level in chapter.levels.all()]
                 } for chapter in subject.chapters.all()]
@@ -64,3 +66,24 @@ class SubjectDetailView(APIView):
             return Response(data)
         except Subject.DoesNotExist:
             return Response({'error': 'Subject not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class ChapterLevelsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, chapter_id):
+        try:
+            chapter = Chapter.objects.get(id=chapter_id)
+            levels = chapter.levels.all()
+            data = {
+                'chapter_id': str(chapter.id),
+                'chapter_name': chapter.name,
+                'levels': [{
+                    'id': str(level.id),
+                    'name': level.name,
+                    'pdflink': level.pdflink,
+                    'is_done': level.is_done
+                } for level in levels]
+            }
+            return Response(data)
+        except Chapter.DoesNotExist:
+            return Response({'error': 'Chapter not found'}, status=status.HTTP_404_NOT_FOUND)
