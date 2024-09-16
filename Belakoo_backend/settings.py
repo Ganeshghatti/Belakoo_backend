@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
-from .firebase_config import firebase_admin, bucket
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -141,9 +140,6 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 APPEND_SLASH = False
-
-FIREBASE_APP = firebase_admin
-FIREBASE_BUCKET = bucket
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True  # For development only
