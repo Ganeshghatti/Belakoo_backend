@@ -87,3 +87,27 @@ class ChapterLevelsView(APIView):
             return Response(data)
         except Chapter.DoesNotExist:
             return Response({'error': 'Chapter not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class MarkLevelDoneView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, level_id):
+        try:
+            level = Level.objects.get(id=level_id)
+            level.is_done = True
+            level.save()
+            return Response({'message': 'Level marked as done'}, status=status.HTTP_200_OK)
+        except Level.DoesNotExist:
+            return Response({'error': 'Level not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class MarkLevelNotDoneView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, level_id):
+        try:
+            level = Level.objects.get(id=level_id)
+            level.is_done = False
+            level.save()
+            return Response({'message': 'Level marked as not done'}, status=status.HTTP_200_OK)
+        except Level.DoesNotExist:
+            return Response({'error': 'Level not found'}, status=status.HTTP_404_NOT_FOUND)

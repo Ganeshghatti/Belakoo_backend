@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-yu)jpn%jxwzdbfvxj6v-r_!a8xa%p!cugh((i044asrgl$3q#d'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['belakoo-backend.onrender.com', 'localhost', '127.0.0.1']
 
 # Application definition
 
