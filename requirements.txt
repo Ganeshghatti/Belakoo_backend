@@ -3,3 +3,6 @@ djangorestframework==3.14.0
 djangorestframework-simplejwt==5.3.0
 django-cors-headers==4.2.0
 gunicorn==21.2.0
+dj-database-url
+psycopg2-binary
+python-dotenv
