@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Campus, Subject, Chapter, Level
+from .models import Campus, Subject, Grade, Chapter, Level
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -14,7 +14,7 @@ class CampusListView(APIView):
     def get(self, request):
         campuses = Campus.objects.all()
         data = [{
-            'id': str(campus.id),  # Convert UUID to string
+            'id': str(campus.id),
             'name': campus.name,
             'icon': campus.icon,
             'description': campus.description,
@@ -28,12 +28,12 @@ class CampusDetailView(APIView):
         try:
             campus = Campus.objects.get(id=campus_id)
             data = {
-                'id': str(campus.id),  # Convert UUID to string
+                'id': str(campus.id),
                 'name': campus.name,
                 'icon': campus.icon,
                 'description': campus.description,
                 'subjects': [{
-                    'id': str(subject.id),  # Convert UUID to string
+                    'id': str(subject.id),
                     'name': subject.name,
                     'icon': subject.icon,
                 } for subject in campus.subjects.all()]
@@ -49,23 +49,41 @@ class SubjectDetailView(APIView):
         try:
             subject = Subject.objects.get(id=subject_id)
             data = {
-                'id': subject.id,
+                'id': str(subject.id),
                 'name': subject.name,
                 'icon': subject.icon,
-                'chapters': [{
-                    'id': chapter.id,
-                    'name': chapter.name,
-                    'levels': [{
-                        'id': level.id,
-                        'name': level.name,
-                        'pdflink': level.pdflink,
-                        'is_done': level.is_done
-                    } for level in chapter.levels.all()]
-                } for chapter in subject.chapters.all()]
+                'grades': [{
+                    'id': str(grade.id),
+                    'name': grade.name,
+                } for grade in subject.grades.all()]
             }
             return Response(data)
         except Subject.DoesNotExist:
             return Response({'error': 'Subject not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class GradeDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, grade_id):
+        try:
+            grade = Grade.objects.get(id=grade_id)
+            data = {
+                'id': str(grade.id),
+                'name': grade.name,
+                'chapters': [{
+                    'id': str(chapter.id),
+                    'name': chapter.name,
+                    'levels': [{
+                        'id': str(level.id),
+                        'name': level.name,
+                        'pdflink': level.pdflink,
+                        'is_done': level.is_done
+                    } for level in chapter.levels.all()]
+                } for chapter in grade.chapters.all()]
+            }
+            return Response(data)
+        except Grade.DoesNotExist:
+            return Response({'error': 'Grade not found'}, status=status.HTTP_404_NOT_FOUND)
 
 class ChapterLevelsView(APIView):
     permission_classes = [IsAuthenticated]

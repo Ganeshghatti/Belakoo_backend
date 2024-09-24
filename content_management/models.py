@@ -22,10 +22,18 @@ class Subject(models.Model):
     def __str__(self):
         return self.name
 
+class Grade(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='grades')
+
+    def __str__(self):
+        return self.name
+
 class Chapter(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='chapters')
+    grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name='chapters')
 
     def __str__(self):
         return self.name
