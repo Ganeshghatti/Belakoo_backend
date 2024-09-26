@@ -31,7 +31,7 @@ SECRET_KEY = 'django-insecure-yu)jpn%jxwzdbfvxj6v-r_!a8xa%p!cugh((i044asrgl$3q#d
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['belakoo-backend.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['belakoo-backend.onrender.com', 'localhost', '127.0.0.1', '10.0.2.2', '*']
 
 # Application definition
 
@@ -86,11 +86,14 @@ WSGI_APPLICATION = 'Belakoo_backend.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'your_local_db_name'),
+        'USER': os.environ.get('DB_USER', 'your_local_db_user'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'your_local_db_password'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
+    }
 }
 
 REST_FRAMEWORK = {

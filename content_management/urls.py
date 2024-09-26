@@ -9,4 +9,6 @@ urlpatterns = [
     path('chapters/<uuid:chapter_id>/levels/', views.ChapterLevelsView.as_view(), name='chapter-levels'),
     path('levels/<uuid:level_id>/mark-done/', views.MarkLevelDoneView.as_view(), name='mark-level-done'),
     path('levels/<uuid:level_id>/mark-not-done/', views.MarkLevelNotDoneView.as_view(), name='mark-level-not-done'),
+    path('test', views.TestView.as_view(), name='test'),
+
 ]

@@ -2,10 +2,50 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Campus, Subject, Grade, Chapter, Level
+from .models import Campus, Subject, Grade, Chapter, Level, Lesson
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
+import pandas as pd
+import math
+
+class TestView(APIView):
+    def get(self, request):
+        try:
+            file_path = 'Belakoo_backend/content/sample.xlsx'
+            df = pd.read_excel(file_path)
+            
+            # Function to find a keyword and its value
+            def find_keyword_value(keyword):
+                for i, row in df.iterrows():
+                    if keyword in row.values:
+                        col_index = row.tolist().index(keyword)
+                        if col_index + 1 < len(row):
+                            return row[col_index + 1]
+                return None
+
+            # List of keywords to search for
+            keywords = [
+                'LESSON CODE', 'SUBJECT', 'OBJECTIVE', 'Duration',
+                'Specific Learning Outcome', 'Behavioural Outcome',
+                'Materials Required', 'HOOK', 'ASSESS', 'INFORM','ENGAGE','TEACH','GUIDED PRACTICE','INDEPENDENT PRACTICE','SHARE','ASSESSMENT'
+            ]
+
+            # Extract values for each keyword
+            lesson_data = {}
+            for keyword in keywords:
+                value = find_keyword_value(keyword)
+                if value is not None:
+                    lesson_data[keyword] = value
+
+            # Print extracted data for debugging
+            print("Extracted data:", lesson_data)
+
+            return Response(lesson_data)
+
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+            return Response({"error": str(e)}, status=500)
 
 class CampusListView(APIView):
     authentication_classes = [JWTAuthentication]
