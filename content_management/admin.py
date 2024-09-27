@@ -1,9 +1,9 @@
 from django.contrib import admin
-from .models import Campus, Subject, Grade, Chapter, Level
+from .models import Campus, Subject, Grade, Chapter, Lesson
 
 # Register models directly without custom admin classes
 admin.site.register(Campus)
 admin.site.register(Subject)
 admin.site.register(Grade)
 admin.site.register(Chapter)
-admin.site.register(Level)
+admin.site.register(Lesson)

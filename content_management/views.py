@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Campus, Subject, Grade, Chapter, Level, Lesson
+from .models import Campus, Subject, Grade, Chapter, Lesson
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -39,9 +39,35 @@ class TestView(APIView):
                     lesson_data[keyword] = value
 
             # Print extracted data for debugging
-            print("Extracted data:", lesson_data)
+            extracted_code = lesson_data['LESSON CODE'].split()[0]
 
-            return Response(lesson_data)
+            subject_code = extracted_code.split('.')[0]
+            grade_code = extracted_code.split('.')[1]
+            chapter_code = extracted_code.split('.')[2]
+
+            subject = Subject.objects.get(subject_code=subject_code)
+            grade = Grade.objects.get(grade_code=grade_code, subject=subject)
+            chapter = Chapter.objects.get(chapter_code=chapter_code, grade=grade)
+
+            # Create and save the Lesson object
+            lesson = Lesson.objects.create(
+                lesson_code=extracted_code,
+                name=f"Lesson {extracted_code}",
+                subject=subject,
+                grade=grade,
+                chapter=chapter,
+                objective=lesson_data.get('OBJECTIVE'),
+                duration=lesson_data.get('Duration'),
+                specific_learning_outcome=lesson_data.get('Specific Learning Outcome'),
+                behavioural_outcome=lesson_data.get('Behavioural Outcome'),
+                materials_required=lesson_data.get('Materials Required'),
+                activate={"HOOK": lesson_data.get('HOOK')},
+                acquire={"INFORM": lesson_data.get('INFORM'), "ENGAGE": lesson_data.get('ENGAGE'), "TEACH": lesson_data.get('TEACH')},
+                apply={"GUIDED PRACTICE": lesson_data.get('GUIDED PRACTICE'), "INDEPENDENT PRACTICE": lesson_data.get('INDEPENDENT PRACTICE'), "SHARE": lesson_data.get('SHARE')},
+                assess={"ASSESSMENT": lesson_data.get('ASSESS')}
+            )
+            print(lesson)
+            return Response({"message": "Lesson created successfully", "lesson_id": str(lesson.id)})
 
         except Exception as e:
             print(f"An error occurred: {str(e)}")
@@ -113,59 +139,86 @@ class GradeDetailView(APIView):
                 'chapters': [{
                     'id': str(chapter.id),
                     'name': chapter.name,
-                    'levels': [{
-                        'id': str(level.id),
-                        'name': level.name,
-                        'pdflink': level.pdflink,
-                        'is_done': level.is_done
-                    } for level in chapter.levels.all()]
+                    'lessons': [{
+                        'id': str(lesson.id),
+                        'name': lesson.name,
+                        'is_done': lesson.is_done
+                    } for lesson in chapter.lessons.all()]
                 } for chapter in grade.chapters.all()]
             }
             return Response(data)
         except Grade.DoesNotExist:
             return Response({'error': 'Grade not found'}, status=status.HTTP_404_NOT_FOUND)
 
-class ChapterLevelsView(APIView):
+class ChapterLessonsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, chapter_id):
         try:
             chapter = Chapter.objects.get(id=chapter_id)
-            levels = chapter.levels.all()
+            lessons = chapter.lessons.all()
             data = {
                 'chapter_id': str(chapter.id),
                 'chapter_name': chapter.name,
-                'levels': [{
-                    'id': str(level.id),
-                    'name': level.name,
-                    'pdflink': level.pdflink,
-                    'is_done': level.is_done
-                } for level in levels]
+                'lessons': [{
+                    'id': str(lesson.id),
+                    'lesson_code': lesson.lesson_code,
+                    'name': lesson.name,
+                    'is_done': lesson.is_done
+                } for lesson in lessons]
             }
             return Response(data)
         except Chapter.DoesNotExist:
             return Response({'error': 'Chapter not found'}, status=status.HTTP_404_NOT_FOUND)
 
-class MarkLevelDoneView(APIView):
+class LessonDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, level_id):
+    def get(self, request, lesson_code):
         try:
-            level = Level.objects.get(id=level_id)
-            level.is_done = True
-            level.save()
-            return Response({'message': 'Level marked as done'}, status=status.HTTP_200_OK)
-        except Level.DoesNotExist:
-            return Response({'error': 'Level not found'}, status=status.HTTP_404_NOT_FOUND)
-
-class MarkLevelNotDoneView(APIView):
+            lesson = Lesson.objects.get(lesson_code=lesson_code)
+            data = {
+                'id': str(lesson.id),
+                'lesson_code': lesson.lesson_code,
+                'name': lesson.name,
+                'subject': lesson.subject.name,
+                'grade': lesson.grade.name,
+                'chapter': lesson.chapter.name,
+                'is_done': lesson.is_done,
+                'objective': lesson.objective,
+                'duration': lesson.duration,
+                'specific_learning_outcome': lesson.specific_learning_outcome,
+                'behavioural_outcome': lesson.behavioural_outcome,
+                'materials_required': lesson.materials_required,
+                'activate': lesson.activate,
+                'acquire': lesson.acquire,
+                'apply': lesson.apply,
+                'assess': lesson.assess,
+            }
+            return Response(data)
+        except Lesson.DoesNotExist:
+            return Response({'error': 'Lesson not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+class MarkLessonDoneView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, level_id):
+    def post(self, request, lesson_id):
         try:
-            level = Level.objects.get(id=level_id)
-            level.is_done = False
-            level.save()
-            return Response({'message': 'Level marked as not done'}, status=status.HTTP_200_OK)
-        except Level.DoesNotExist:
-            return Response({'error': 'Level not found'}, status=status.HTTP_404_NOT_FOUND)
+            lesson = Lesson.objects.get(id=lesson_id)
+            lesson.is_done = True
+            lesson.save()
+            return Response({'message': 'Lesson marked as done'}, status=status.HTTP_200_OK)
+        except Lesson.DoesNotExist:
+            return Response({'error': 'Lesson not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class MarkLessonNotDoneView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, lesson_id):
+        try:
+            lesson = Lesson.objects.get(id=lesson_id)
+            lesson.is_done = False
+            lesson.save()
+            return Response({'message': 'Lesson marked as not done'}, status=status.HTTP_200_OK)
+        except Lesson.DoesNotExist:
+            return Response({'error': 'Lesson not found'}, status=status.HTTP_404_NOT_FOUND)
