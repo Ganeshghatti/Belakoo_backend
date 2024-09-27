@@ -142,6 +142,7 @@ class GradeDetailView(APIView):
                     'lessons': [{
                         'id': str(lesson.id),
                         'name': lesson.name,
+                        'lesson_code': lesson.lesson_code,
                         'is_done': lesson.is_done
                     } for lesson in chapter.lessons.all()]
                 } for chapter in grade.chapters.all()]
@@ -167,6 +168,7 @@ class ChapterLessonsView(APIView):
                     'is_done': lesson.is_done
                 } for lesson in lessons]
             }
+            print(data)
             return Response(data)
         except Chapter.DoesNotExist:
             return Response({'error': 'Chapter not found'}, status=status.HTTP_404_NOT_FOUND)
