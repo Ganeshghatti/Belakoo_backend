@@ -27,7 +27,7 @@ class TestView(APIView):
             # List of keywords to search for
             keywords = [
                 'LESSON CODE', 'SUBJECT', 'OBJECTIVE', 'Duration',
-                'Specific Learning Outcome', 'Behavioural Outcome',
+                'Specific Learning Outcome ', 'Behavioural Outcome',
                 'Materials Required', 'HOOK', 'ASSESS', 'INFORM','ENGAGE','TEACH','GUIDED PRACTICE','INDEPENDENT PRACTICE','SHARE','ASSESSMENT'
             ]
 
