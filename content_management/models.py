@@ -4,7 +4,7 @@ import json
 
 class Campus(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    campus_code=models.CharField(max_length=10, unique=True)
+    campus_code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=255)
     icon = models.URLField()
     description = models.TextField()
@@ -17,7 +17,7 @@ class Campus(models.Model):
 
 class Subject(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    subject_code=models.CharField(max_length=10, unique=True)
+    subject_code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=255)
     icon = models.URLField()
     campus = models.ForeignKey(Campus, on_delete=models.CASCADE, related_name='subjects')
@@ -27,18 +27,21 @@ class Subject(models.Model):
 
 class Grade(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    grade_code=models.CharField(max_length=10, unique=True)
+    grade_code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=255)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='grades')
 
     def __str__(self):
         return self.name
 
-class Chapter(models.Model):
+class Proficiency(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    chapter_code=models.CharField(max_length=10, unique=True)
+    proficiency_code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=255)
-    grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name='chapters')
+    grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name='proficiencies')
+
+    class Meta:
+        verbose_name_plural = "Proficiencies"
 
     def __str__(self):
         return self.name
@@ -49,7 +52,7 @@ class Lesson(models.Model):
     name = models.CharField(max_length=255)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='lessons')
     grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name='lessons')
-    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='lessons')
+    proficiency = models.ForeignKey(Proficiency, on_delete=models.CASCADE, related_name='lessons')
     is_done = models.BooleanField(default=False)
     objective = models.TextField(null=True, blank=True)
     duration = models.CharField(max_length=50, null=True, blank=True)
@@ -63,5 +66,3 @@ class Lesson(models.Model):
 
     def __str__(self):
         return self.lesson_code
-
-    # Keep the existing methods for setting and getting JSON fields
