@@ -40,6 +40,7 @@ class CampusDetailView(APIView):
                     'id': str(subject.id),
                     'name': subject.name,
                     'icon': subject.icon,
+                    'colorcode':subject.colorcode
                 } for subject in campus.subjects.all()]
             }
             return Response(data)

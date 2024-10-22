@@ -21,6 +21,7 @@ class Subject(models.Model):
     name = models.CharField(max_length=255)
     icon = models.URLField()
     campus = models.ForeignKey(Campus, on_delete=models.CASCADE, related_name='subjects')
+    colorcode=models.CharField(max_length=10)
 
     def __str__(self):
         return self.name
