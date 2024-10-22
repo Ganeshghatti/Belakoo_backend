@@ -10,5 +10,5 @@ urlpatterns = [
     path('lessons/<str:lesson_code>/', views.LessonDetailView.as_view(), name='lesson-detail'),
     path('lessons/<uuid:lesson_id>/mark-done/', views.MarkLessonDoneView.as_view(), name='mark-lesson-done'),
     path('lessons/<uuid:lesson_id>/mark-not-done/', views.MarkLessonNotDoneView.as_view(), name='mark-lesson-not-done'),
-    path('test', views.TestView.as_view(), name='test'),
+    path('parse/', views.ParseCSVView.as_view(), name='test'),
 ]

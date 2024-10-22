@@ -8,6 +8,8 @@ from rest_framework.decorators import permission_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
 import pandas as pd
 import math
+import os
+import glob
 
 class CampusListView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -160,66 +162,124 @@ class MarkLessonNotDoneView(APIView):
         except Lesson.DoesNotExist:
             return Response({'error': 'Lesson not found'}, status=status.HTTP_404_NOT_FOUND)
 
-class TestView(APIView):
+class ParseCSVView(APIView):
     def get(self, request):
+        created_lessons = []
+        not_found_content = []
+        error_details = []
+
         try:
-            file_path = 'Belakoo_backend/content/sample.xlsx'
-            df = pd.read_excel(file_path)
+            import os
+            import glob
+            import pandas as pd
             
-            # Function to find a keyword and its value
-            def find_keyword_value(keyword):
-                for i, row in df.iterrows():
-                    if keyword in row.values:
-                        col_index = row.tolist().index(keyword)
-                        if col_index + 1 < len(row):
-                            return row[col_index + 1]
-                return None
+            # Path to the content directory
+            content_dir = 'Belakoo_backend/content/'
+            # Get all CSV files in the directory
+            csv_files = glob.glob(os.path.join(content_dir, '*.csv'))
 
-            # List of keywords to search for
-            keywords = [
-                'LESSON CODE', 'SUBJECT', 'OBJECTIVE', 'Duration',
-                'Specific Learning Outcome ', 'Behavioural Outcome',
-                'Materials Required', 'HOOK', 'ASSESS', 'INFORM','ENGAGE','TEACH','GUIDED PRACTICE','INDEPENDENT PRACTICE','SHARE','ASSESSMENT'
-            ]
+            # Assuming campus with code 'c1' exists
+            campus = Campus.objects.get(campus_code='c1')
 
-            # Extract values for each keyword
-            lesson_data = {}
-            for keyword in keywords:
-                value = find_keyword_value(keyword)
-                if value is not None:
-                    lesson_data[keyword] = value
+            for file_path in csv_files:
+                print(f"Processing file: {file_path}")
+                df = pd.read_csv(file_path)
 
-            # Print extracted data for debugging
-            extracted_code = lesson_data['LESSON CODE'].split()[0]
+                # Function to find a keyword and its value
+                def find_keyword_value(keyword):
+                    for i, row in df.iterrows():
+                        if keyword in row.values:
+                            col_index = row.tolist().index(keyword)
+                            if col_index + 1 < len(row):
+                                return row[col_index + 1]
+                    return None
 
-            subject_code = extracted_code.split('.')[0]
-            grade_code = extracted_code.split('.')[1]
-            proficiency_code = extracted_code.split('.')[2]
-            lesson_number = extracted_code.split('.')[3]
+                # List of keywords to search for
+                keywords = [
+                    'LESSON CODE', 'OBJECTIVE', 'Duration',
+                    'Specific Learning Outcome', 'Behavioural Outcome',
+                    'Materials Required', 'HOOK', 'ASSESS', 'INFORM', 'ENGAGE', 'TEACH', 'GUIDED PRACTICE', 'INDEPENDENT PRACTICE', 'SHARE', 'ASSESSMENT'
+                ]
 
-            subject = Subject.objects.get(subject_code=subject_code)
-            grade = Grade.objects.get(grade_code=grade_code, subject=subject)
-            proficiency = Proficiency.objects.get(proficiency_code=proficiency_code, grade=grade)
+                # Extract values for each keyword
+                lesson_data = {}
+                for keyword in keywords:
+                    value = find_keyword_value(keyword)
+                    if value is not None:
+                        lesson_data[keyword] = value
+                    else:
+                        not_found_content.append(keyword)
 
-            # Create and save the Lesson object
-            lesson = Lesson.objects.create(
-                lesson_code=extracted_code,
-                name=f"Lesson {lesson_number}",
-                subject=subject,
-                grade=grade,
-                proficiency=proficiency,
-                objective=lesson_data.get('OBJECTIVE'),
-                duration=lesson_data.get('Duration'),
-                specific_learning_outcome=lesson_data.get('Specific Learning Outcome'),
-                behavioural_outcome=lesson_data.get('Behavioural Outcome'),
-                materials_required=lesson_data.get('Materials Required'),
-                activate={"HOOK": lesson_data.get('HOOK')},
-                acquire={"INFORM": lesson_data.get('INFORM'), "ENGAGE": lesson_data.get('ENGAGE'), "TEACH": lesson_data.get('TEACH')},
-                apply={"GUIDED PRACTICE": lesson_data.get('GUIDED PRACTICE'), "INDEPENDENT PRACTICE": lesson_data.get('INDEPENDENT PRACTICE'), "SHARE": lesson_data.get('SHARE')},
-                assess={"ASSESSMENT": lesson_data.get('ASSESS')}
-            )
-            print(lesson)
-            return Response({"message": "Lesson created successfully", "lesson_id": str(lesson.id)})
+                # Parse the LESSON CODE
+                extracted_code = lesson_data.get('LESSON CODE', '').split('.')
+                if len(extracted_code) != 4:
+                    print(f"Invalid LESSON CODE format: {lesson_data.get('LESSON CODE')}")
+                    continue  # Skip this entry if the format is invalid
+
+                subject_code = extracted_code[0]  # First part is subject
+                grade_code = extracted_code[1]     # Second part is grade
+                lesson_number = extracted_code[2]  # Third part is lesson
+                proficiency_code = extracted_code[3]  # Fourth part is proficiency
+
+                # Get or create the Subject
+                subject_name = find_keyword_value('SUBJECT')  # Assuming 'SUBJECT' is a keyword in the CSV
+                subject, created = Subject.objects.get_or_create(
+                    subject_code=subject_code,
+                    defaults={'name': subject_name, 'campus': campus}
+                )
+                print(f"{'Created' if created else 'Found'} subject: {subject.name}")
+
+                # Get or create the Grade
+                grade, created = Grade.objects.get_or_create(
+                    grade_code=grade_code,
+                    defaults={'name': grade_code, 'subject': subject}
+                )
+                print(f"{'Created' if created else 'Found'} grade: {grade.name}")
+
+                # Get or create the Proficiency
+                proficiency, created = Proficiency.objects.get_or_create(
+                    proficiency_code=proficiency_code,
+                    defaults={'name': proficiency_code, 'grade': grade}
+                )
+                print(f"{'Created' if created else 'Found'} proficiency: {proficiency.name}")
+
+                # Create and save the Lesson object
+                try:
+                    lesson = Lesson.objects.create(
+                        lesson_code=lesson_data['LESSON CODE'],
+                        name=f"Lesson {lesson_number}",
+                        subject=subject,
+                        grade=grade,
+                        proficiency=proficiency,
+                        objective=lesson_data.get('OBJECTIVE', ''),
+                        duration=lesson_data.get('Duration', ''),
+                        specific_learning_outcome=lesson_data.get('Specific Learning Outcome', ''),
+                        behavioural_outcome=lesson_data.get('Behavioural Outcome', ''),
+                        materials_required=lesson_data.get('Materials Required', ''),
+                        activate={"HOOK": lesson_data.get('HOOK', '')},
+                        acquire={"INFORM": lesson_data.get('INFORM', ''), "ENGAGE": lesson_data.get('ENGAGE', ''), "TEACH": lesson_data.get('TEACH', '')},
+                        apply={"GUIDED PRACTICE": lesson_data.get('GUIDED PRACTICE', ''), "INDEPENDENT PRACTICE": lesson_data.get('INDEPENDENT PRACTICE', ''), "SHARE": lesson_data.get('SHARE', '')},
+                        assess={"ASSESSMENT": lesson_data.get('ASSESS', '')}
+                    )
+                    created_lessons.append(lesson.lesson_code)
+                    print(f"Lesson created: {lesson.name}")
+
+                except Exception as e:
+                    error_details.append({
+                        'lesson_code': lesson_data.get('LESSON CODE'),
+                        'error': str(e)
+                    })
+                    print(f"Error creating lesson: {str(e)}")
+
+            # Prepare the response
+            response_data = {
+                "message": "Lessons processed successfully",
+                "created_lessons": created_lessons,
+                "not_found_content": not_found_content,
+                "error_details": error_details
+            }
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             print(f"An error occurred: {str(e)}")
