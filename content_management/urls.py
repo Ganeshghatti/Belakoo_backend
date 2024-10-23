@@ -8,7 +8,7 @@ urlpatterns = [
     path('grades/<uuid:grade_id>/', views.GradeDetailView.as_view(), name='grade-detail'),
     path('proficiencies/<uuid:proficiency_id>/lessons/', views.ProficiencyLessonsView.as_view(), name='proficiency-lessons'),
     path('lessons/<str:lesson_code>/', views.LessonDetailView.as_view(), name='lesson-detail'),
-    path('lessons/<uuid:lesson_id>/mark-done/', views.MarkLessonDoneView.as_view(), name='mark-lesson-done'),
-    path('lessons/<uuid:lesson_id>/mark-not-done/', views.MarkLessonNotDoneView.as_view(), name='mark-lesson-not-done'),
+    path('lessons/<str:lesson_code>/mark-done/', views.MarkLessonDoneView.as_view(), name='mark-lesson-done'),
+    path('lessons/<str:lesson_code>/mark-not-done/', views.MarkLessonNotDoneView.as_view(), name='mark-lesson-not-done'),
     path('parse/', views.ParseCSVView.as_view(), name='test'),
 ]

@@ -143,9 +143,9 @@ class LessonDetailView(APIView):
 class MarkLessonDoneView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, lesson_id):
+    def post(self, request, lesson_code):
         try:
-            lesson = Lesson.objects.get(id=lesson_id)
+            lesson = Lesson.objects.get(lesson_code=lesson_code)
             lesson.is_done = True
             lesson.save()
             return Response({'message': 'Lesson marked as done'}, status=status.HTTP_200_OK)
@@ -155,9 +155,9 @@ class MarkLessonDoneView(APIView):
 class MarkLessonNotDoneView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, lesson_id):
+    def post(self, request, lesson_code):
         try:
-            lesson = Lesson.objects.get(id=lesson_id)
+            lesson = Lesson.objects.get(lesson_code=lesson_code)
             lesson.is_done = False
             lesson.save()
             return Response({'message': 'Lesson marked as not done'}, status=status.HTTP_200_OK)
@@ -238,10 +238,11 @@ class ParseCSVView(APIView):
                 )
                 print(f"{'Created' if created else 'Found'} grade: {grade.name}")
 
-                # Get or create the Proficiency
+                # Create a new Proficiency for this specific Grade
                 proficiency, created = Proficiency.objects.get_or_create(
                     proficiency_code=proficiency_code,
-                    defaults={'name': proficiency_code, 'grade': grade}
+                    grade=grade,  # Link proficiency to the specific grade
+                    defaults={'name': proficiency_code}
                 )
                 print(f"{'Created' if created else 'Found'} proficiency: {proficiency.name}")
 
